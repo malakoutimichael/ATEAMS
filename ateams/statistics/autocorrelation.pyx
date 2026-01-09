@@ -59,7 +59,7 @@ def normalized(X):
 		X (np.array): A NumPy array of numerical values.
 
 	Returns:
-		A NumPy array of unnormalized autocorrelation values.
+		A NumPy array of normalized autocorrelation values.
 	"""
 	unn = unnormalized(X);
 	return unn/unn[0];
