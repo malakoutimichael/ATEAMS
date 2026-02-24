@@ -206,11 +206,13 @@ class InvadedCluster():
 				_births, _deaths = zip(*pairs)
 				births = set(_births)
 				deaths = set(_deaths)
-
-				return set(
+				_essential = sorted(set(
 					e for e in times-(births|deaths)
 					if low <= e < high
-				)
+				))
+
+				return np.array([_essential[self._STOP]], dtype=int)
+			
 			
 			def persist(filtration):
 				essential = ComputePersistencePairs(self.matrices.full, filtration, self.dimension, self.complex.breaks)
