@@ -40,6 +40,7 @@ test/profiles/**/*.txt
 test/profiles/**/*.err
 test/profiles/**/*.out
 !test/profiles/**/*.gitkeep
+test/scratch.py
 
 # Ignore annotated compilation summaries from Cython.
 ateams/arithmetic/*.html
