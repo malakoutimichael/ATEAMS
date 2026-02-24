@@ -211,7 +211,8 @@ class InvadedCluster():
 					if low <= e < high
 				))
 
-				return np.array([_essential[self._STOP]], dtype=int)
+				if self.full: return np.array(_essential, dtype=int)
+				else: return np.array([_essential[self._STOP]], dtype=int)
 			
 			
 			def persist(filtration):
