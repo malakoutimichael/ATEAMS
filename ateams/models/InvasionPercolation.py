@@ -16,10 +16,10 @@ class InvasionPercolation():
 		Args:
 			C (Complex): The `Complex` object on which we'll be running experiments.
 			dimension (int=1): The dimension of cells on which we're percolating.
-			initial (np.array): A vector of spin assignments to components.
-			full (bool=True): Do we find *all* the homological persistence events,
-				or just the target one?
-			stop (function): A function that returns the number of essential cycles
+			initial (np.array): A boolean vector indicating which cells are included
+				in the initial subcomplex.
+			full (bool=True): Do we find *all* the giant cycles?
+			stop (function): A function that returns the number of giant cycles
 				found before sampling the next configuration.
 		"""
 		# Object access.
