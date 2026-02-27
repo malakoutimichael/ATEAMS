@@ -878,11 +878,14 @@ re-sampling.</dd>
                                 _births, _deaths = zip(*pairs)
                                 births = set(_births)
                                 deaths = set(_deaths)
-
-                                return set(
+                                _essential = sorted(set(
                                         e for e in times-(births|deaths)
                                         if low &lt;= e &lt; high
-                                )
+                                ))
+
+                                if self.full: return np.array(_essential, dtype=int)
+                                else: return np.array([_essential[self._STOP]], dtype=int)
+                        
                         
                         def persist(filtration):
                                 essential = ComputePersistencePairs(self.matrices.full, filtration, self.dimension, self.complex.breaks)
@@ -980,6 +983,192 @@ re-sampling.</dd>
                 satisfied[satisfiedIndices] = 1
 
                 return spins, occupied, satisfied
+        
+
+        def _assign(self, cocycle):
+                &#34;&#34;&#34;
+                Updates mappings from faces to spins and cubes to occupations.
+
+                Args:
+                        cocycle (np.array): Cocycle on the subcomplex.
+                
+                Returns:
+                        Nothing.
+                &#34;&#34;&#34;
+                self.spins = cocycle</code></pre>
+</details>
+</dd>
+<dt id="ateams.models.InvasionPercolation"><code class="flex name class">
+<span>class <span class="ident">InvasionPercolation</span></span>
+<span>(</span><span>C,<br>dimension=1,<br>initial=None,<br>full=False,<br>stop=&lt;function InvasionPercolation.&lt;lambda&gt;&gt;,<br>**kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initializes an invasion percolation on the given complex.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>C</code></strong> :&ensp;<code>Complex</code></dt>
+<dd>The <code>Complex</code> object on which we'll be running experiments.</dd>
+<dt><strong><code>dimension</code></strong> :&ensp;<code>int=1</code></dt>
+<dd>The dimension of cells on which we're percolating.</dd>
+<dt><strong><code>initial</code></strong> :&ensp;<code>np.array</code></dt>
+<dd>A boolean vector indicating which cells are included
+in the initial subcomplex.</dd>
+<dt><strong><code>full</code></strong> :&ensp;<code>bool=True</code></dt>
+<dd>Do we find <em>all</em> the giant cycles?</dd>
+<dt><strong><code>stop</code></strong> :&ensp;<code>function</code></dt>
+<dd>A function that returns the number of giant cycles
+found before sampling the next configuration.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class InvasionPercolation():
+        _name = &#34;InvasionPercolation&#34;
+        
+        def __init__(self, C, dimension=1, initial=None, full=False, stop=lambda: 1, **kwargs):
+                &#34;&#34;&#34;
+                Initializes an invasion percolation on the given complex.
+
+                Args:
+                        C (Complex): The `Complex` object on which we&#39;ll be running experiments.
+                        dimension (int=1): The dimension of cells on which we&#39;re percolating.
+                        initial (np.array): A boolean vector indicating which cells are included
+                                in the initial subcomplex.
+                        full (bool=True): Do we find *all* the giant cycles?
+                        stop (function): A function that returns the number of giant cycles
+                                found before sampling the next configuration.
+                &#34;&#34;&#34;
+                # Object access.
+                self.complex = C
+                self.dimension = dimension
+                self.stop = stop
+                self._returns = 1
+                self.field = 2
+                self.full = full
+
+                # Check if we&#39;re debugging.
+                self._DEBUG = kwargs.get(&#34;_DEBUG&#34;, False)
+
+                # Useful values to have later.
+                self.cellCount = len(self.complex.flattened)
+                self.cells = len(self.complex.Boundary[self.dimension])
+                self.faces = len(self.complex.Boundary[self.dimension-1])
+                self.target = np.arange(self.complex.breaks[self.dimension], self.complex.breaks[self.dimension+1])
+
+                # Premake the &#34;occupied cells&#34; array; change the dimension of the complex
+                # to correspond to the provided dimension.
+                self.rank = comb(len(self.complex.corners), self.dimension)
+
+                # Force-recompute the matrices for a different dimension; creates
+                # a set of orientations for fast elementwise products.
+                self.matrices = Matrices()
+                self.matrices.full = self.complex.matrices.full
+
+                # Delegates computation for persistence and cocycle sampling.
+                self._delegateComputation()
+
+                # Seed the random number generator.
+                self.RNG = np.random.default_rng()
+
+                # If no initial spin configuration is passed, initialize.
+                if not initial: self.spins = self._initial()
+                else: self.spins = (initial%self.field).astype(FINT)
+
+        
+        def _delegateComputation(self):
+                low, high = self.complex.breaks[self.dimension], self.complex.breaks[self.dimension+1]
+                times = set(range(self.cellCount))
+
+                def whittle(pairs):
+                        _births, _deaths = zip(*pairs)
+                        births = set(_births)
+                        deaths = set(_deaths)
+                        _essential = sorted(set(
+                                e for e in times-(births|deaths)
+                                if low &lt;= e &lt; high
+                        ))
+
+                        if self.full: return np.array(_essential, dtype=int)
+                        else: return np.array([_essential[self._STOP]], dtype=int)
+                
+                
+                def persist(filtration):
+                        essential = ComputePersistencePairs(self.matrices.full, filtration, self.dimension, self.complex.breaks)
+                        return whittle(essential)
+
+                self.persist = persist
+
+
+        def _filtrate(self):
+                &#34;&#34;&#34;
+                Constructs a filtration based on the evaluation of the cochain.
+                &#34;&#34;&#34;
+                # Construct the filtration. We could probably get away with having a
+                # fixed `self.filtration` instance property and then just modifying it
+                # at each step; that might be a later thing, though.
+                filtration = np.arange(self.cellCount)
+                low = self.complex.breaks[self.dimension]
+                high = self.complex.breaks[self.dimension+1]
+
+                indices = np.arange(self.cells)
+                shuffled = np.random.permutation(indices)
+                filtration[low:high] = self.target[shuffled]
+
+                return filtration, shuffled
+
+
+        def _initial(self):
+                &#34;&#34;&#34;
+                Computes an initial state for the model&#39;s Complex.
+
+                Returns:
+                        A boolean vector representing a random initial subcomplex.
+                &#34;&#34;&#34;
+                init = self.RNG.uniform(size=self.cells)
+                return (init &lt; 1/2).astype(bool)
+
+        
+
+        def _proposal(self, time):
+                &#34;&#34;&#34;
+                Proposal scheme for generalized invaded-cluster evolution on the
+                random-cluster model.
+
+                Args:
+                        time (int): Step in the chain.
+
+                Returns:
+                        A numpy array representing a vector of spin assignments.
+                &#34;&#34;&#34;
+                # Set a stopping time.
+                self._STOP = self.stop();
+
+                # Construct the filtration and find the essential cycles.
+                filtration, shuffled = self._filtrate()
+                essential = self.persist(filtration)
+
+                j = 0
+                low = self.complex.breaks[self.dimension]
+
+                # If we only computed a desired percolation time, then the matrix of
+                # occupied cell indices has one row...
+                if not self.full:
+                        t = essential[0]
+                        occupied = np.zeros(self.cells, dtype=int)
+                        occupiedIndices = shuffled[:t-low+1]
+                        occupied[occupiedIndices] = 1
+
+                # Otherwise, it has `rank` rows.
+                else:
+                        occupied = np.zeros((self.rank, self.cells), dtype=int)
+
+                        for t in sorted(essential):
+                                occupiedIndices = shuffled[:t-low+1]
+                                occupied[j,occupiedIndices] = 1
+                                j += 1
+
+                return occupied
         
 
         def _assign(self, cocycle):
@@ -1599,6 +1788,9 @@ proof.appendChild(square);
 </li>
 <li>
 <h4><code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code></h4>
+</li>
+<li>
+<h4><code><a title="ateams.models.InvasionPercolation" href="#ateams.models.InvasionPercolation">InvasionPercolation</a></code></h4>
 </li>
 <li>
 <h4><code><a title="ateams.models.Nienhuis" href="#ateams.models.Nienhuis">Nienhuis</a></code></h4>
