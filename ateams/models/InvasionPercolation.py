@@ -121,8 +121,7 @@ class InvasionPercolation():
 
 	def proposal(self, time):
 		"""
-		Proposal scheme for generalized invaded-cluster evolution on the
-		random-cluster model.
+		Proposal scheme for generalized invasion percolation evolution.
 
 		Args:
 			time (int): Step in the chain.

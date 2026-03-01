@@ -113,8 +113,8 @@ text-align: center;
 </header>
 <section id="section-intro">
 <h2 id="models">Models</h2>
-<p>A <em>model</em> programmatically specifies a probability distribution over a combinatorial object like a graph, cubical complex, or polytope. Given one of these objects (e.g. <code><a title="ateams.complexes.Cubical" href="../complexes/index.html#ateams.complexes.Cubical">Cubical</a></code>), each model implements a proposal function_ for sampling from the distribution it specifies. For example, <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code> represents the Edwards-Sokal coupling of the <a href="https://link.springer.com/article/10.1007/s00220-025-05322-5"><em>plaquette random cluster model</em> and <em>Potts lattice gauge theory</em></a> on subcomplexes of the $d$-fold, scale-$N$ cubical torus $\mathbb T^d_N$; its proposal function is a generalized version of the <a href="https://link.aps.org/doi/10.1103/PhysRevLett.58.86"><em>Swendsen-Wang algorithm</em></a>.</p>
-<p>The <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code>, <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code>, and <code><a title="ateams.models.Nienhuis" href="#ateams.models.Nienhuis">Nienhuis</a></code> models require performant sparse linear algebra over finite fields, for which we turn to <a href="https://github.com/linbox-team/linbox">LinBox</a>. The <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code> and <code>Bernoulli</code> models require fast computation of persistent homology, for which we use <a href="https://www.sciencedirect.com/science/article/pii/S0747717116300098">PHAT</a> (when sampling over $\mathbb Z/2\mathbb Z$) and a home-brew variant of <a href="https://www.geometrie.tugraz.at/kerber/kerber_papers/ck-phcwat-11.pdf">the "twist" algorithm proposed by Chen and Kerber</a>. Only the <code><a title="ateams.models.Glauber" href="#ateams.models.Glauber">Glauber</a></code> dynamics model is implemented in "pure Python," though it relies exclusively on NumPy.</p>
+<p>A <em>model</em> programmatically specifies a probability distribution over a combinatorial object like a graph, cubical complex, or polytope. Given one of these objects (e.g. <code><a title="ateams.complexes.Cubical" href="../complexes/index.html#ateams.complexes.Cubical">Cubical</a></code>), each model implements a <em>proposal function</em> for sampling from the distribution it specifies. For example, <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code> represents the Edwards-Sokal coupling of the <a href="https://link.springer.com/article/10.1007/s00220-025-05322-5"><em>plaquette random cluster model</em> and <em>Potts lattice gauge theory</em></a> on subcomplexes of the $d$-fold, scale-$N$ cubical torus $\mathbb T^d_N$; its proposal function is a generalized version of the <a href="https://link.aps.org/doi/10.1103/PhysRevLett.58.86"><em>Swendsen-Wang algorithm</em></a>.</p>
+<p>The <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code>, <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code>, and <code><a title="ateams.models.Nienhuis" href="#ateams.models.Nienhuis">Nienhuis</a></code> models require performant sparse linear algebra over finite fields, for which we turn to <a href="https://github.com/cbouilla/spasm">SpaSM</a> and <a href="https://github.com/munuxi/SparseRREF">SparseRREF</a>. The <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code> and <code>Bernoulli</code> models require fast computation of persistent homology, for which we use <a href="https://www.sciencedirect.com/science/article/pii/S0747717116300098">PHAT</a> (when sampling over $\mathbb Z/2\mathbb Z$) and a home-brew variant of <a href="https://www.geometrie.tugraz.at/kerber/kerber_papers/ck-phcwat-11.pdf">the "twist" algorithm proposed by Chen and Kerber</a>. Only the <code><a title="ateams.models.Glauber" href="#ateams.models.Glauber">Glauber</a></code> dynamics model is implemented in "pure Python," though it relies exclusively on NumPy.</p>
 <p>The documentation for each model comes with performance information, viewable by clicking (e.g.) the "Performance over $\mathbb T^2_N$" button. Each configuration completed 100 iterations on Pangolin, a Dell Precision 5280 workstation with an 18-core Intel Xeon W-2295 CPU clocked at 1.3GHz.</p>
 </section>
 <section>
@@ -1045,8 +1045,7 @@ found before sampling the next configuration.</dd>
 
         def proposal(self, time):
                 &#34;&#34;&#34;
-                Proposal scheme for generalized invaded-cluster evolution on the
-                random-cluster model.
+                Proposal scheme for generalized invasion percolation evolution.
 
                 Args:
                         time (int): Step in the chain.
@@ -1113,8 +1112,7 @@ found before sampling the next configuration.</dd>
 <span>def <span class="ident">proposal</span></span>(<span>self, time)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Proposal scheme for generalized invaded-cluster evolution on the
-random-cluster model.</p>
+<div class="desc"><p>Proposal scheme for generalized invasion percolation evolution.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>time</code></strong> :&ensp;<code>int</code></dt>
