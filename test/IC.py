@@ -19,7 +19,7 @@ def construct(L, dim, field):
 
 	# Set up Model and Chain.
 	SW = InvadedCluster(L, dimension=dim//2, field=field)
-	N = 250
+	N = 100
 	M = Chain(SW, steps=N)
 	return M
 

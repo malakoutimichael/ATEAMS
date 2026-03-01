@@ -103,7 +103,7 @@ class Nienhuis():
 		)
 	
 
-	def _proposal(self, time):
+	def proposal(self, time):
 		"""
 		Proposal scheme for the Nienhuis model.
 
@@ -111,7 +111,11 @@ class Nienhuis():
 			time (int): Step in the chain.
 
 		Returns:
-			A numpy array of spin assignments (mod p).
+			A 3-tuple:
+
+			1. a NumPy array of spin assignments;
+			2. a numerical value representing the energy on \(1\)-cells;
+			3. a numerical value representing the energy on \(2\)-cells.
 		"""
 		# Choose which cells and faces to include.
 		cells = self.RNG.uniform(size=self.cells)

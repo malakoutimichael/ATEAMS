@@ -1,4 +1,5 @@
 
+from ateams.statistics import bettis
 from ateams.complexes import Cubical
 from ateams.models import InvasionPercolation
 from ateams import Chain
@@ -24,11 +25,10 @@ def construct(L, dim, field):
 	return M
 
 def chain(M, DESC=""):
-	for result in M.progress(dynamic_ncols=True, desc=DESC):
-		pass
+	for result in M.progress(dynamic_ncols=True, desc=DESC): pass
 	return M._exitcode
 
 if __name__ == "__main__":
-	M = construct(10, 4, 3)
+	M = construct(3, 2, 3)
 	chain(M)
 

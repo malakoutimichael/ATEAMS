@@ -61,7 +61,7 @@ class Glauber():
 		)
 	
 
-	def _proposal(self, time):
+	def proposal(self, time):
 		"""
 		Proposal scheme for generalized Glauber dynamics on the Potts model:
 		uniformly randomly chooses a face in the complex, flips the face's spin,

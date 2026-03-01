@@ -4,6 +4,7 @@ from .schedules import constant, critical, randomizedToConstant, linear
 from .autocorrelation import unnormalized, normalized, integrated
 from .cutoffs import rectangular
 from .observables import totalEnergy, occupancy
+from .homology import bettis
 from .Chain import Chain, Recorder, Player
 
 __pdoc__ = {}

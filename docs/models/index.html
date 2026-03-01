@@ -113,8 +113,8 @@ text-align: center;
 </header>
 <section id="section-intro">
 <h2 id="models">Models</h2>
-<p>A <em>model</em> programmatically specifies a probability distribution over a combinatorial object like a graph, cubical complex, or polytope. Given one of these objects (e.g. <code><a title="ateams.complexes.Cubical" href="../complexes/index.html#ateams.complexes.Cubical">Cubical</a></code>), each model implements a <em>proposal function</em> for sampling from the distribution it specifies. For example, <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code> represents the Edwards-Sokal coupling of the <a href="https://link.springer.com/article/10.1007/s00220-025-05322-5"><em>plaquette random cluster model</em> and <em>Potts lattice gauge theory</em></a> on subcomplexes of the $d$-fold, scale-$N$ cubical torus $\mathbb T^d_N$; its proposal function is a generalized version of the <a href="https://link.aps.org/doi/10.1103/PhysRevLett.58.86"><em>Swendsen-Wang algorithm</em></a>.</p>
-<p>The <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code>, <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code>, and <code><a title="ateams.models.Nienhuis" href="#ateams.models.Nienhuis">Nienhuis</a></code> models require performant sparse linear algebra over finite fields, for which we turn to <a href="https://github.com/linbox-team/linbox">LinBox</a>. The <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code> and <code><a title="ateams.models.Bernoulli" href="#ateams.models.Bernoulli">Bernoulli</a></code> models require fast computation of persistent homology, for which we use <a href="https://www.sciencedirect.com/science/article/pii/S0747717116300098">PHAT</a> (when sampling over $\mathbb Z/2\mathbb Z$) and a home-brew variant of <a href="https://www.geometrie.tugraz.at/kerber/kerber_papers/ck-phcwat-11.pdf">the "twist" algorithm proposed by Chen and Kerber</a>. Only the <code><a title="ateams.models.Glauber" href="#ateams.models.Glauber">Glauber</a></code> dynamics model is implemented in "pure Python," though it relies exclusively on NumPy.</p>
+<p>A <em>model</em> programmatically specifies a probability distribution over a combinatorial object like a graph, cubical complex, or polytope. Given one of these objects (e.g. <code><a title="ateams.complexes.Cubical" href="../complexes/index.html#ateams.complexes.Cubical">Cubical</a></code>), each model implements a proposal function_ for sampling from the distribution it specifies. For example, <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code> represents the Edwards-Sokal coupling of the <a href="https://link.springer.com/article/10.1007/s00220-025-05322-5"><em>plaquette random cluster model</em> and <em>Potts lattice gauge theory</em></a> on subcomplexes of the $d$-fold, scale-$N$ cubical torus $\mathbb T^d_N$; its proposal function is a generalized version of the <a href="https://link.aps.org/doi/10.1103/PhysRevLett.58.86"><em>Swendsen-Wang algorithm</em></a>.</p>
+<p>The <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code>, <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code>, and <code><a title="ateams.models.Nienhuis" href="#ateams.models.Nienhuis">Nienhuis</a></code> models require performant sparse linear algebra over finite fields, for which we turn to <a href="https://github.com/linbox-team/linbox">LinBox</a>. The <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code> and <code>Bernoulli</code> models require fast computation of persistent homology, for which we use <a href="https://www.sciencedirect.com/science/article/pii/S0747717116300098">PHAT</a> (when sampling over $\mathbb Z/2\mathbb Z$) and a home-brew variant of <a href="https://www.geometrie.tugraz.at/kerber/kerber_papers/ck-phcwat-11.pdf">the "twist" algorithm proposed by Chen and Kerber</a>. Only the <code><a title="ateams.models.Glauber" href="#ateams.models.Glauber">Glauber</a></code> dynamics model is implemented in "pure Python," though it relies exclusively on NumPy.</p>
 <p>The documentation for each model comes with performance information, viewable by clicking (e.g.) the "Performance over $\mathbb T^2_N$" button. Each configuration completed 100 iterations on Pangolin, a Dell Precision 5280 workstation with an 18-core Intel Xeon W-2295 CPU clocked at 1.3GHz.</p>
 </section>
 <section>
@@ -126,155 +126,6 @@ text-align: center;
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="ateams.models.Bernoulli"><code class="flex name class">
-<span>class <span class="ident">Bernoulli</span></span>
-<span>(</span><span>C, dimension=1, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Initializes classic Bernoulli percolation on the provided complex,
-detecting percolation in the <code>dimension</code>-1th homology group.</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>C</code></strong> :&ensp;<code>Complex</code></dt>
-<dd>The <code>Complex</code> object on which we'll be running experiments.</dd>
-<dt><strong><code>dimension</code></strong> :&ensp;<code>int=1</code></dt>
-<dd>The dimension of cells on which we're percolating.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class Bernoulli():
-        _name = &#34;Bernoulli&#34;
-        
-        def __init__(self, C, dimension=1, **kwargs):
-                &#34;&#34;&#34;
-                Initializes classic Bernoulli percolation on the provided complex,
-                detecting percolation in the `dimension`-1th homology group.
-
-                Args:
-                        C (Complex): The `Complex` object on which we&#39;ll be running experiments.
-                        dimension (int=1): The dimension of cells on which we&#39;re percolating.
-                &#34;&#34;&#34;
-                # Object access. Set a field.
-                self.complex = C
-                self.dimension = dimension
-                self._returns = 1
-                self.field = 2
-
-                # Set a phantom spins attribute so we don&#39;t break the Chain
-                self.spins = None
-
-
-                # Force-recompute the matrices for a different dimension; creates
-                # a set of orientations for fast elementwise products.
-                self.matrices = Matrices()
-                self.matrices.full = self.complex.matrices.full
-
-                boundary, coboundary = self.complex.recomputeBoundaryMatrices(dimension)
-                self.matrices.boundary = boundary
-                self.matrices.coboundary = coboundary
-
-                # Useful values to have later.
-                self.cellCount = len(self.complex.flattened)
-                self.cells = len(self.complex.Boundary[self.dimension])
-                self.faces = len(self.complex.Boundary[self.dimension-1])
-                self.target = np.arange(self.complex.breaks[self.dimension], self.complex.breaks[self.dimension+1])
-
-                # Premake the &#34;occupied cells&#34; array; change the dimension of the complex
-                # to correspond to the provided dimension.
-                self.rank = comb(len(self.complex.corners), self.dimension)
-                self.nullity = len(self.complex.Boundary[self.dimension])
-
-                # Delegates computation for persistence.
-                self._delegateComputation()
-
-                # Seed the random number generator.
-                self.RNG = np.random.default_rng()
-
-        
-        def _delegateComputation(self):
-                low, high = self.complex.breaks[self.dimension], self.complex.breaks[self.dimension+1]
-                times = set(range(self.cellCount))
-
-                def whittle(pairs):
-                        _births, _deaths = zip(*pairs)
-                        births = set(_births)
-                        deaths = set(_deaths)
-
-                        return set(
-                                e for e in times-(births|deaths)
-                                if low &lt;= e &lt; high
-                        )
-
-                def persist(filtration):
-                        essential = ComputePersistencePairs(
-                                self.matrices.full, filtration, self.dimension, self.complex.breaks
-                        )
-
-                        return whittle(essential)
-
-                self.persist = persist
-
-
-        def _filtrate(self):
-                &#34;&#34;&#34;
-                Constructs a filtration based on the evaluation of the cochain.
-                &#34;&#34;&#34;
-                # Find which cubes get zeroed out (i.e. are sent to zero by the cocycle).
-                low = self.complex.breaks[self.dimension]
-                high = self.complex.breaks[self.dimension+1]
-
-                filtration = np.arange(self.cellCount)
-                shuffled = np.random.permutation(self.target)
-                filtration[low:high] = shuffled
-
-                return filtration, shuffled-low
-
-
-        def _initial(self):
-                &#34;&#34;&#34;
-                Computes an initial state for the model&#39;s Complex.
-
-                Returns:
-                        A numpy `np.array` representing a vector of spin assignments.
-                &#34;&#34;&#34;
-                return self.RNG.integers(
-                        0, high=self.field, dtype=FINT, size=self.faces
-                )
-        
-
-        def _proposal(self, time):
-                &#34;&#34;&#34;
-                Proposal scheme for generalized invaded-cluster evolution on the
-                random-cluster model.
-
-                Args:
-                        time (int): Step in the chain.
-
-                Returns:
-                        A numpy array representing a vector of spin assignments.
-                &#34;&#34;&#34;
-                # Construct the filtration and find the essential cycles.
-                filtration, shuffled = self._filtrate()
-                essential = self.persist(filtration)
-
-                j = 0
-                low = self.complex.breaks[self.dimension]
-
-                occupied = np.zeros((self.rank, self.nullity))
-
-                for t in essential:
-                        occupiedIndices = shuffled[:t-low]
-                        occupied[j,occupiedIndices] = 1
-                        j += 1
-
-                return occupied
-        
-
-        def _assign(self, cocycle): pass</code></pre>
-</details>
-</dd>
 <dt id="ateams.models.Glauber"><code class="flex name class">
 <span>class <span class="ident">Glauber</span></span>
 <span>(</span><span>C,<br>dimension=1,<br>field=2,<br>temperature=&lt;function constant.&lt;locals&gt;._&gt;,<br>initial=None,<br>**kwargs)</span>
@@ -502,7 +353,7 @@ scheduled temperature at time <code>t</code>.</dd>
                 )
         
 
-        def _proposal(self, time):
+        def proposal(self, time):
                 &#34;&#34;&#34;
                 Proposal scheme for generalized Glauber dynamics on the Potts model:
                 uniformly randomly chooses a face in the complex, flips the face&#39;s spin,
@@ -565,6 +416,24 @@ scheduled temperature at time <code>t</code>.</dd>
                 &#34;&#34;&#34;
                 self.spins = cochain</code></pre>
 </details>
+<h3>Methods</h3>
+<dl>
+<dt id="ateams.models.Glauber.proposal"><code class="name flex">
+<span>def <span class="ident">proposal</span></span>(<span>self, time)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Proposal scheme for generalized Glauber dynamics on the Potts model:
+uniformly randomly chooses a face in the complex, flips the face's spin,
+and returns the corresponding cocycle.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>time</code></strong> :&ensp;<code>int</code></dt>
+<dd>Step in the chain.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A NumPy array representing a vector of spin assignments.</p></div>
+</dd>
+</dl>
 </dd>
 <dt id="ateams.models.InvadedCluster"><code class="flex name class">
 <span>class <span class="ident">InvadedCluster</span></span>
@@ -936,7 +805,7 @@ re-sampling.</dd>
                 )
         
 
-        def _proposal(self, time):
+        def proposal(self, time):
                 &#34;&#34;&#34;
                 Proposal scheme for generalized invaded-cluster evolution on the
                 random-cluster model.
@@ -945,7 +814,17 @@ re-sampling.</dd>
                         time (int): Step in the chain.
 
                 Returns:
-                        A numpy array representing a vector of spin assignments.
+                        A 3-tuple:
+
+                        1. a NumPy array of spin assignments;
+                        2. a boolean array where each column corresponds to a \(d\)-cell,
+                                and each row corresponds to a \(d\)-dimensional homological
+                                percolation event, so each entry indicates the presence or
+                                absence of that \(d\)-cell when the \(d\)-dimensional homological
+                                percolation event occurred;
+                        3. a boolean array where each column correponds to a \(d\)-cell,
+                                and each entry indicates whether its corresponding \(d\)-cell
+                                was satisfied under the given spin assignment.
                 &#34;&#34;&#34;
                 # Set a stopping time.
                 self._STOP = self.stop();
@@ -997,10 +876,38 @@ re-sampling.</dd>
                 &#34;&#34;&#34;
                 self.spins = cocycle</code></pre>
 </details>
+<h3>Methods</h3>
+<dl>
+<dt id="ateams.models.InvadedCluster.proposal"><code class="name flex">
+<span>def <span class="ident">proposal</span></span>(<span>self, time)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Proposal scheme for generalized invaded-cluster evolution on the
+random-cluster model.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>time</code></strong> :&ensp;<code>int</code></dt>
+<dd>Step in the chain.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A 3-tuple:</p>
+<ol>
+<li>a NumPy array of spin assignments;</li>
+<li>a boolean array where each column corresponds to a <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell,
+and each row corresponds to a <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-dimensional homological
+percolation event, so each entry indicates the presence or
+absence of that <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell when the <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-dimensional homological
+percolation event occurred;</li>
+<li>a boolean array where each column correponds to a <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell,
+and each entry indicates whether its corresponding <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell
+was satisfied under the given spin assignment.</li>
+</ol></div>
+</dd>
+</dl>
 </dd>
 <dt id="ateams.models.InvasionPercolation"><code class="flex name class">
 <span>class <span class="ident">InvasionPercolation</span></span>
-<span>(</span><span>C,<br>dimension=1,<br>initial=None,<br>full=False,<br>stop=&lt;function InvasionPercolation.&lt;lambda&gt;&gt;,<br>**kwargs)</span>
+<span>(</span><span>C,<br>dimension=1,<br>initial=None,<br>full=True,<br>stop=&lt;function InvasionPercolation.&lt;lambda&gt;&gt;,<br>**kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Initializes an invasion percolation on the given complex.</p>
@@ -1026,7 +933,7 @@ found before sampling the next configuration.</dd>
 <pre><code class="python">class InvasionPercolation():
         _name = &#34;InvasionPercolation&#34;
         
-        def __init__(self, C, dimension=1, initial=None, full=False, stop=lambda: 1, **kwargs):
+        def __init__(self, C, dimension=1, initial=None, full=True, stop=lambda: 1, **kwargs):
                 &#34;&#34;&#34;
                 Initializes an invasion percolation on the given complex.
 
@@ -1043,8 +950,7 @@ found before sampling the next configuration.</dd>
                 self.complex = C
                 self.dimension = dimension
                 self.stop = stop
-                self._returns = 1
-                self.field = 2
+                self._returns = 4
                 self.full = full
 
                 # Check if we&#39;re debugging.
@@ -1072,18 +978,16 @@ found before sampling the next configuration.</dd>
                 self.RNG = np.random.default_rng()
 
                 # If no initial spin configuration is passed, initialize.
-                if not initial: self.spins = self._initial()
-                else: self.spins = (initial%self.field).astype(FINT)
+                self.spins = self._initial() if initial is None else initial
 
         
         def _delegateComputation(self):
                 low, high = self.complex.breaks[self.dimension], self.complex.breaks[self.dimension+1]
                 times = set(range(self.cellCount))
-
-                def whittle(pairs):
-                        _births, _deaths = zip(*pairs)
-                        births = set(_births)
-                        deaths = set(_deaths)
+                
+                
+                def whittle(births, deaths):
+                        # Avoid doing this computation twice; TODO come back and fix this later
                         _essential = sorted(set(
                                 e for e in times-(births|deaths)
                                 if low &lt;= e &lt; high
@@ -1091,12 +995,21 @@ found before sampling the next configuration.</dd>
 
                         if self.full: return np.array(_essential, dtype=int)
                         else: return np.array([_essential[self._STOP]], dtype=int)
-                
+
                 
                 def persist(filtration):
-                        essential = ComputePersistencePairs(self.matrices.full, filtration, self.dimension, self.complex.breaks)
-                        return whittle(essential)
+                        pairs = ComputePersistencePairs(self.matrices.full, filtration, self.dimension, self.complex.breaks)
 
+                        _births, _deaths = zip(*pairs)
+                        births = set(_births)
+                        deaths = set(_deaths)
+
+                        total = np.array(sorted(times-(births|deaths)), dtype=int)
+                        essential = whittle(births, deaths)
+                        pairs = np.array(pairs).T
+
+                        return essential, total, pairs
+                
                 self.persist = persist
 
 
@@ -1130,7 +1043,7 @@ found before sampling the next configuration.</dd>
 
         
 
-        def _proposal(self, time):
+        def proposal(self, time):
                 &#34;&#34;&#34;
                 Proposal scheme for generalized invaded-cluster evolution on the
                 random-cluster model.
@@ -1139,14 +1052,25 @@ found before sampling the next configuration.</dd>
                         time (int): Step in the chain.
 
                 Returns:
-                        A numpy array representing a vector of spin assignments.
+                        A 4-tuple:
+
+                        1. a boolean array where each column corresponds to a \(d\)-cell,
+                                and each row corresponds to a \(d\)-dimensional homological
+                                percolation event, so each entry indicates the presence or
+                                absence of that \(d\)-cell when the \(d\)-dimensional homological
+                                percolation event occurred;
+                        2. times at which \(d\)-dimensional homological percolation events
+                                occurred;
+                        3. times at which *all* homological percolation events occurred;
+                        4. a two-dimensional int array encoding persistence pairs.
+
                 &#34;&#34;&#34;
                 # Set a stopping time.
                 self._STOP = self.stop();
 
                 # Construct the filtration and find the essential cycles.
                 filtration, shuffled = self._filtrate()
-                essential = self.persist(filtration)
+                essential, total, pairs = self.persist(filtration)
 
                 j = 0
                 low = self.complex.breaks[self.dimension]
@@ -1161,14 +1085,14 @@ found before sampling the next configuration.</dd>
 
                 # Otherwise, it has `rank` rows.
                 else:
-                        occupied = np.zeros((self.rank, self.cells), dtype=int)
+                        occupied = np.zeros((self.rank, self.cells), dtype=bool)
 
-                        for t in sorted(essential):
+                        for t in essential:
                                 occupiedIndices = shuffled[:t-low+1]
                                 occupied[j,occupiedIndices] = 1
                                 j += 1
 
-                return occupied
+                return occupied, essential, total, pairs
         
 
         def _assign(self, cocycle):
@@ -1183,6 +1107,34 @@ found before sampling the next configuration.</dd>
                 &#34;&#34;&#34;
                 self.spins = cocycle</code></pre>
 </details>
+<h3>Methods</h3>
+<dl>
+<dt id="ateams.models.InvasionPercolation.proposal"><code class="name flex">
+<span>def <span class="ident">proposal</span></span>(<span>self, time)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Proposal scheme for generalized invaded-cluster evolution on the
+random-cluster model.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>time</code></strong> :&ensp;<code>int</code></dt>
+<dd>Step in the chain.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A 4-tuple:</p>
+<ol>
+<li>a boolean array where each column corresponds to a <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell,
+and each row corresponds to a <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-dimensional homological
+percolation event, so each entry indicates the presence or
+absence of that <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell when the <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-dimensional homological
+percolation event occurred;</li>
+<li>times at which <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-dimensional homological percolation events
+occurred;</li>
+<li>times at which <em>all</em> homological percolation events occurred;</li>
+<li>a two-dimensional int array encoding persistence pairs.</li>
+</ol></div>
+</dd>
+</dl>
 </dd>
 <dt id="ateams.models.Nienhuis"><code class="flex name class">
 <span>class <span class="ident">Nienhuis</span></span>
@@ -1310,7 +1262,7 @@ vector in the kernel of the coboundary matrix.</dd>
                 )
         
 
-        def _proposal(self, time):
+        def proposal(self, time):
                 &#34;&#34;&#34;
                 Proposal scheme for the Nienhuis model.
 
@@ -1318,7 +1270,11 @@ vector in the kernel of the coboundary matrix.</dd>
                         time (int): Step in the chain.
 
                 Returns:
-                        A numpy array of spin assignments (mod p).
+                        A 3-tuple:
+
+                        1. a NumPy array of spin assignments;
+                        2. a numerical value representing the energy on \(1\)-cells;
+                        3. a numerical value representing the energy on \(2\)-cells.
                 &#34;&#34;&#34;
                 # Choose which cells and faces to include.
                 cells = self.RNG.uniform(size=self.cells)
@@ -1367,6 +1323,27 @@ vector in the kernel of the coboundary matrix.</dd>
                 &#34;&#34;&#34;
                 self.spins = cocycle</code></pre>
 </details>
+<h3>Methods</h3>
+<dl>
+<dt id="ateams.models.Nienhuis.proposal"><code class="name flex">
+<span>def <span class="ident">proposal</span></span>(<span>self, time)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Proposal scheme for the Nienhuis model.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>time</code></strong> :&ensp;<code>int</code></dt>
+<dd>Step in the chain.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A 3-tuple:</p>
+<ol>
+<li>a NumPy array of spin assignments;</li>
+<li>a numerical value representing the energy on <span><span class="MathJax_Preview">1</span><script type="math/tex">1</script></span>-cells;</li>
+<li>a numerical value representing the energy on <span><span class="MathJax_Preview">2</span><script type="math/tex">2</script></span>-cells.</li>
+</ol></div>
+</dd>
+</dl>
 </dd>
 <dt id="ateams.models.SwendsenWang"><code class="flex name class">
 <span>class <span class="ident">SwendsenWang</span></span>
@@ -1677,7 +1654,7 @@ to which output data are cast.
                 )
         
 
-        def _proposal(self, time):
+        def proposal(self, time):
                 &#34;&#34;&#34;
                 Proposal scheme for generalized Swendsen-Wang evolution on the Potts model.
 
@@ -1685,7 +1662,17 @@ to which output data are cast.
                         time (int): Step in the chain.
 
                 Returns:
-                        A numpy array representing a vector of spin assignments.
+                        A 3-tuple:
+
+                        1. a NumPy array of spin assignments;
+                        2. a boolean array where each column corresponds to a \(d\)-cell,
+                                and each row corresponds to a \(d\)-dimensional homological
+                                percolation event, so each entry indicates the presence or
+                                absence of that \(d\)-cell when the \(d\)-dimensional homological
+                                percolation event occurred;
+                        3. a boolean array where each column correponds to a \(d\)-cell,
+                                and each entry indicates whether its corresponding \(d\)-cell
+                                was satisfied under the given spin assignment.
                 &#34;&#34;&#34;
                 # Compute the probability of choosing any individual cube in the complex.
                 T = self.temperature(time)
@@ -1742,6 +1729,33 @@ to which output data are cast.
                 &#34;&#34;&#34;
                 self.spins = cocycle</code></pre>
 </details>
+<h3>Methods</h3>
+<dl>
+<dt id="ateams.models.SwendsenWang.proposal"><code class="name flex">
+<span>def <span class="ident">proposal</span></span>(<span>self, time)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Proposal scheme for generalized Swendsen-Wang evolution on the Potts model.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>time</code></strong> :&ensp;<code>int</code></dt>
+<dd>Step in the chain.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A 3-tuple:</p>
+<ol>
+<li>a NumPy array of spin assignments;</li>
+<li>a boolean array where each column corresponds to a <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell,
+and each row corresponds to a <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-dimensional homological
+percolation event, so each entry indicates the presence or
+absence of that <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell when the <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-dimensional homological
+percolation event occurred;</li>
+<li>a boolean array where each column correponds to a <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell,
+and each entry indicates whether its corresponding <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell
+was satisfied under the given spin assignment.</li>
+</ol></div>
+</dd>
+</dl>
 </dd>
 </dl>
 </section>
@@ -1781,22 +1795,34 @@ proof.appendChild(square);
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="ateams.models.Bernoulli" href="#ateams.models.Bernoulli">Bernoulli</a></code></h4>
-</li>
-<li>
 <h4><code><a title="ateams.models.Glauber" href="#ateams.models.Glauber">Glauber</a></code></h4>
+<ul class="">
+<li><code><a title="ateams.models.Glauber.proposal" href="#ateams.models.Glauber.proposal">proposal</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code></h4>
+<ul class="">
+<li><code><a title="ateams.models.InvadedCluster.proposal" href="#ateams.models.InvadedCluster.proposal">proposal</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="ateams.models.InvasionPercolation" href="#ateams.models.InvasionPercolation">InvasionPercolation</a></code></h4>
+<ul class="">
+<li><code><a title="ateams.models.InvasionPercolation.proposal" href="#ateams.models.InvasionPercolation.proposal">proposal</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="ateams.models.Nienhuis" href="#ateams.models.Nienhuis">Nienhuis</a></code></h4>
+<ul class="">
+<li><code><a title="ateams.models.Nienhuis.proposal" href="#ateams.models.Nienhuis.proposal">proposal</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code></h4>
+<ul class="">
+<li><code><a title="ateams.models.SwendsenWang.proposal" href="#ateams.models.SwendsenWang.proposal">proposal</a></code></li>
+</ul>
 </li>
 </ul>
 </li>

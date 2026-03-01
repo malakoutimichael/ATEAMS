@@ -7,6 +7,6 @@ class Model:
         have each of the `proposal()` and `initial()` methods.
         """
         pass
-    def _proposal(self): pass
+    def proposal(self): pass
     def _initial(self): pass
     def _assign(self): pass

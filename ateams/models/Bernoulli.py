@@ -106,7 +106,7 @@ class Bernoulli():
 		)
 	
 
-	def _proposal(self, time):
+	def proposal(self, time):
 		"""
 		Proposal scheme for generalized invaded-cluster evolution on the
 		random-cluster model.

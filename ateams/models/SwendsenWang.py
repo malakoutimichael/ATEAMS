@@ -107,7 +107,7 @@ class SwendsenWang():
 		)
 	
 
-	def _proposal(self, time):
+	def proposal(self, time):
 		"""
 		Proposal scheme for generalized Swendsen-Wang evolution on the Potts model.
 
@@ -115,7 +115,17 @@ class SwendsenWang():
 			time (int): Step in the chain.
 
 		Returns:
-			A numpy array representing a vector of spin assignments.
+			A 3-tuple:
+
+			1. a NumPy array of spin assignments;
+			2. a boolean array where each column corresponds to a \(d\)-cell,
+				and each row corresponds to a \(d\)-dimensional homological
+				percolation event, so each entry indicates the presence or
+				absence of that \(d\)-cell when the \(d\)-dimensional homological
+				percolation event occurred;
+			3. a boolean array where each column correponds to a \(d\)-cell,
+				and each entry indicates whether its corresponding \(d\)-cell
+				was satisfied under the given spin assignment.
 		"""
 		# Compute the probability of choosing any individual cube in the complex.
 		T = self.temperature(time)

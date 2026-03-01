@@ -9,7 +9,7 @@ from ..common import Matrices, FINT
 class InvasionPercolation():
 	_name = "InvasionPercolation"
 	
-	def __init__(self, C, dimension=1, initial=None, full=False, stop=lambda: 1, **kwargs):
+	def __init__(self, C, dimension=1, initial=None, full=True, stop=lambda: 1, **kwargs):
 		"""
 		Initializes an invasion percolation on the given complex.
 
@@ -26,8 +26,7 @@ class InvasionPercolation():
 		self.complex = C
 		self.dimension = dimension
 		self.stop = stop
-		self._returns = 1
-		self.field = 2
+		self._returns = 4
 		self.full = full
 
 		# Check if we're debugging.
@@ -55,18 +54,16 @@ class InvasionPercolation():
 		self.RNG = np.random.default_rng()
 
 		# If no initial spin configuration is passed, initialize.
-		if not initial: self.spins = self._initial()
-		else: self.spins = (initial%self.field).astype(FINT)
+		self.spins = self._initial() if initial is None else initial
 
 	
 	def _delegateComputation(self):
 		low, high = self.complex.breaks[self.dimension], self.complex.breaks[self.dimension+1]
 		times = set(range(self.cellCount))
-
-		def whittle(pairs):
-			_births, _deaths = zip(*pairs)
-			births = set(_births)
-			deaths = set(_deaths)
+		
+		
+		def whittle(births, deaths):
+			# Avoid doing this computation twice; TODO come back and fix this later
 			_essential = sorted(set(
 				e for e in times-(births|deaths)
 				if low <= e < high
@@ -74,12 +71,21 @@ class InvasionPercolation():
 
 			if self.full: return np.array(_essential, dtype=int)
 			else: return np.array([_essential[self._STOP]], dtype=int)
-		
+
 		
 		def persist(filtration):
-			essential = ComputePersistencePairs(self.matrices.full, filtration, self.dimension, self.complex.breaks)
-			return whittle(essential)
+			pairs = ComputePersistencePairs(self.matrices.full, filtration, self.dimension, self.complex.breaks)
 
+			_births, _deaths = zip(*pairs)
+			births = set(_births)
+			deaths = set(_deaths)
+
+			total = np.array(sorted(times-(births|deaths)), dtype=int)
+			essential = whittle(births, deaths)
+			pairs = np.array(pairs).T
+
+			return essential, total, pairs
+		
 		self.persist = persist
 
 
@@ -113,7 +119,7 @@ class InvasionPercolation():
 
 	
 
-	def _proposal(self, time):
+	def proposal(self, time):
 		"""
 		Proposal scheme for generalized invaded-cluster evolution on the
 		random-cluster model.
@@ -122,14 +128,25 @@ class InvasionPercolation():
 			time (int): Step in the chain.
 
 		Returns:
-			A numpy array representing a vector of spin assignments.
+			A 4-tuple:
+
+			1. a boolean array where each column corresponds to a \(d\)-cell,
+				and each row corresponds to a \(d\)-dimensional homological
+				percolation event, so each entry indicates the presence or
+				absence of that \(d\)-cell when the \(d\)-dimensional homological
+				percolation event occurred;
+			2. times at which \(d\)-dimensional homological percolation events
+				occurred;
+			3. times at which *all* homological percolation events occurred;
+			4. a two-dimensional int array encoding persistence pairs.
+
 		"""
 		# Set a stopping time.
 		self._STOP = self.stop();
 
 		# Construct the filtration and find the essential cycles.
 		filtration, shuffled = self._filtrate()
-		essential = self.persist(filtration)
+		essential, total, pairs = self.persist(filtration)
 
 		j = 0
 		low = self.complex.breaks[self.dimension]
@@ -144,14 +161,14 @@ class InvasionPercolation():
 
 		# Otherwise, it has `rank` rows.
 		else:
-			occupied = np.zeros((self.rank, self.cells), dtype=int)
+			occupied = np.zeros((self.rank, self.cells), dtype=bool)
 
-			for t in sorted(essential):
+			for t in essential:
 				occupiedIndices = shuffled[:t-low+1]
 				occupied[j,occupiedIndices] = 1
 				j += 1
 
-		return occupied
+		return occupied, essential, total, pairs
 	
 
 	def _assign(self, cocycle):

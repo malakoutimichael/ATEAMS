@@ -15,7 +15,8 @@ from .InvasionPercolation import InvasionPercolation
 
 __pdoc__ = {}
 __pdoc__["ateams.models.Model"] = False
+__pdoc__["ateams.models.Bernoulli"] = False
 
 __all__ = [
-    "SwendsenWang", "InvadedCluster", "Glauber", "Nienhuis", "Bernoulli", "InvasionPercolation"
+    "SwendsenWang", "InvadedCluster", "Glauber", "Nienhuis", "InvasionPercolation"
 ]

@@ -24,4 +24,4 @@ DESC = [str(thing).ljust(width) for thing, width in zip(TESTS, WIDTHS)]
 DESC = " ".join(DESC)
 DESC = ("      "+DESC).ljust(10)
 
-profile(IP.chain, [M,DESC], f"./profiles/InvadedCluster/{L}.{DIM}.{FIELD}.{'PHAT.' if FIELD<3 else 'Linear.'}txt")
+profile(IP.chain, [M,DESC], f"./profiles/InvasionPercolation/{L}.{DIM}.{FIELD}.{'PHAT.' if FIELD<3 else 'Linear.'}txt")

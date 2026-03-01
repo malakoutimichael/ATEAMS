@@ -128,6 +128,10 @@ text-align: center;
 <dd>
 <div class="desc"></div>
 </dd>
+<dt><code class="name"><a title="ateams.statistics.homology" href="homology.html">ateams.statistics.homology</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt><code class="name"><a title="ateams.statistics.observables" href="observables.html">ateams.statistics.observables</a></code></dt>
 <dd>
 <div class="desc"></div>
@@ -439,7 +443,7 @@ each iteration and stores whatever output is given.</dd>
                         # Propose the next state and check whether we want to accept it as
                         # the next state or not; assign whichever state is chosen to the
                         # Model.
-                        try: proposed = self.model._proposal(self.step)
+                        try: proposed = self.model.proposal(self.step)
                         except NumericalInstabilityWarning:
                                 self._exitcode = 2
                                 self._warnings += 1
@@ -847,6 +851,7 @@ proof.appendChild(square);
 <li><code><a title="ateams.statistics.accepts" href="accepts.html">ateams.statistics.accepts</a></code></li>
 <li><code><a title="ateams.statistics.autocorrelation" href="autocorrelation.html">ateams.statistics.autocorrelation</a></code></li>
 <li><code><a title="ateams.statistics.cutoffs" href="cutoffs.html">ateams.statistics.cutoffs</a></code></li>
+<li><code><a title="ateams.statistics.homology" href="homology.html">ateams.statistics.homology</a></code></li>
 <li><code><a title="ateams.statistics.observables" href="observables.html">ateams.statistics.observables</a></code></li>
 <li><code><a title="ateams.statistics.schedules" href="schedules.html">ateams.statistics.schedules</a></code></li>
 </ul>

@@ -73,8 +73,8 @@ Bernoulli: FORCE
 	@cd test && ./profile.models.Bernoulli.sh 19 22 2
 
 InvasionPercolation: FORCE
-	@cd test && ./profile.models.IP.sh 4 7 4
-	@cd test && ./profile.models.IP.sh 49 52 2
+	@cd test && ./profile.models.IP.sh 6 9 4
+	@cd test && ./profile.models.IP.sh 99 103 2
 
 
 profile: Glauber SwendsenWang Nienhuis InvadedCluster

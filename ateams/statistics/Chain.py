@@ -92,7 +92,7 @@ class Chain:
 			# Propose the next state and check whether we want to accept it as
 			# the next state or not; assign whichever state is chosen to the
 			# Model.
-			try: proposed = self.model._proposal(self.step)
+			try: proposed = self.model.proposal(self.step)
 			except NumericalInstabilityWarning:
 				self._exitcode = 2
 				self._warnings += 1
