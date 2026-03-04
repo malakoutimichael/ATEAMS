@@ -9,24 +9,26 @@ from ..common import Matrices, FINT
 class Bernoulli():
 	_name = "Bernoulli"
 	
-	def __init__(self, C, dimension=1, **kwargs):
+	def __init__(self, C, p=1/2, dimension=1, **kwargs):
 		"""
-		Initializes classic Bernoulli percolation on the provided complex,
+		Initializes classical Bernoulli percolation on the provided complex,
 		detecting percolation in the `dimension`-1th homology group.
 
 		Args:
 			C (Complex): The `Complex` object on which we'll be running experiments.
+			p (float=1/2): The probability with which cells of the desired dimension
+				are added.
 			dimension (int=1): The dimension of cells on which we're percolating.
 		"""
 		# Object access. Set a field.
 		self.complex = C
 		self.dimension = dimension
-		self._returns = 1
+		self._returns = 2
 		self.field = 2
+		self.p = p
 
 		# Set a phantom spins attribute so we don't break the Chain
 		self.spins = None
-
 
 		# Force-recompute the matrices for a different dimension; creates
 		# a set of orientations for fast elementwise products.
@@ -48,6 +50,10 @@ class Bernoulli():
 		self.rank = comb(len(self.complex.corners), self.dimension)
 		self.nullity = len(self.complex.Boundary[self.dimension])
 
+		# Set low and high markers for adding cells.
+		self.low = self.complex.breaks[self.dimension]
+		self.high = self.complex.breaks[self.dimension+1]
+
 		# Delegates computation for persistence.
 		self._delegateComputation()
 
@@ -56,42 +62,49 @@ class Bernoulli():
 
 	
 	def _delegateComputation(self):
-		low, high = self.complex.breaks[self.dimension], self.complex.breaks[self.dimension+1]
 		times = set(range(self.cellCount))
+		
+		def whittle(births, deaths):
+			# Avoid doing this computation twice; TODO come back and fix this later
+			_essential = sorted(set(
+				e for e in times-(births|deaths)
+				if self.low <= e < self.high
+			))
 
-		def whittle(pairs):
+			return np.array(_essential, dtype=int)
+
+		
+		def persist(filtration):
+			pairs = ComputePersistencePairs(self.matrices.full, filtration, self.dimension, self.complex.breaks)
+
 			_births, _deaths = zip(*pairs)
 			births = set(_births)
 			deaths = set(_deaths)
 
-			return set(
-				e for e in times-(births|deaths)
-				if low <= e < high
-			)
+			total = np.array(sorted(times-(births|deaths)), dtype=int)
+			essential = whittle(births, deaths)
+			pairs = np.array(pairs).T
 
-		def persist(filtration):
-			essential = ComputePersistencePairs(
-				self.matrices.full, filtration, self.dimension, self.complex.breaks
-			)
-
-			return whittle(essential)
-
+			return essential, total, pairs
+		
 		self.persist = persist
 
 
 	def _filtrate(self):
 		"""
-		Constructs a filtration based on the evaluation of the cochain.
+		Constructs a filtration.
 		"""
-		# Find which cubes get zeroed out (i.e. are sent to zero by the cocycle).
-		low = self.complex.breaks[self.dimension]
-		high = self.complex.breaks[self.dimension+1]
+		uniform = self.RNG.uniform(size=self.cells)
+		include = np.nonzero(uniform < self.p)[0]
+		exclude = np.nonzero(~(uniform < self.p))[0]
+		m = include.shape[0]
 
 		filtration = np.arange(self.cellCount)
-		shuffled = np.random.permutation(self.target)
-		filtration[low:high] = shuffled
 
-		return filtration, shuffled-low
+		filtration[self.low:self.low+m] = self.target[include]
+		filtration[self.low+m:self.high] = self.target[exclude]
+
+		return filtration, include
 
 
 	def _initial(self):
@@ -108,31 +121,31 @@ class Bernoulli():
 
 	def proposal(self, time):
 		"""
-		Proposal scheme for generalized invaded-cluster evolution on the
-		random-cluster model.
+		Proposal scheme for generalized Bernoulli percolation.
 
 		Args:
 			time (int): Step in the chain.
 
 		Returns:
-			A numpy array representing a vector of spin assignments.
+			A 2-tuple:
+
+			1. a boolean array with a \(1\) in each entry corresponding to an
+				included \(d\)-cell;
+			2. times at which \(d\)-dimensional homological percolation events
+				occurred.
 		"""
 		# Construct the filtration and find the essential cycles.
-		filtration, shuffled = self._filtrate()
-		essential = self.persist(filtration)
+		filtration, included = self._filtrate()
+		essential, __, _ = self.persist(filtration)
 
-		j = 0
-		low = self.complex.breaks[self.dimension]
+		# Find when we stopped adding cells.
+		stop = self.low + included.shape[0]
+		giants = essential[(self.low < essential) & (essential < stop)]
+		occupied = np.zeros(self.nullity, dtype=bool)
+		occupied[included] = 1
 
-		occupied = np.zeros((self.rank, self.nullity))
-
-		for t in essential:
-			occupiedIndices = shuffled[:t-low]
-			occupied[j,occupiedIndices] = 1
-			j += 1
-
-		return occupied
+		return occupied, giants
 	
 
-	def _assign(self, cocycle): pass
+	def _assign(self, cochain): pass
 

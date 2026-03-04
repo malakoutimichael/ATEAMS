@@ -24,8 +24,9 @@ def construct(L, DIM):
 	return M
 
 def chain(M, DESC=""):
-	for essentials in M.progress(dynamic_ncols=True, desc=DESC):
+	for occupied, giants in M.progress(dynamic_ncols=True, desc=DESC):
 		pass
+
 	return M._exitcode
 
 if __name__ == "__main__":

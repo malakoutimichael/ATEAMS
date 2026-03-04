@@ -91,7 +91,7 @@ class InvasionPercolation():
 
 	def _filtrate(self):
 		"""
-		Constructs a filtration based on the evaluation of the cochain.
+		Constructs a filtration.
 		"""
 		# Construct the filtration. We could probably get away with having a
 		# fixed `self.filtration` instance property and then just modifying it
@@ -170,15 +170,5 @@ class InvasionPercolation():
 		return occupied, essential, total, pairs
 	
 
-	def _assign(self, cocycle):
-		"""
-		Updates mappings from faces to spins and cubes to occupations.
-
-		Args:
-			cocycle (np.array): Cocycle on the subcomplex.
-		
-		Returns:
-			Nothing.
-		"""
-		self.spins = cocycle
+	def _assign(self, cochain): pass
 
