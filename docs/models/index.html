@@ -1015,7 +1015,7 @@ found before sampling the next configuration.</dd>
 
         def _filtrate(self):
                 &#34;&#34;&#34;
-                Constructs a filtration based on the evaluation of the cochain.
+                Constructs a filtration.
                 &#34;&#34;&#34;
                 # Construct the filtration. We could probably get away with having a
                 # fixed `self.filtration` instance property and then just modifying it
@@ -1094,17 +1094,7 @@ found before sampling the next configuration.</dd>
                 return occupied, essential, total, pairs
         
 
-        def _assign(self, cocycle):
-                &#34;&#34;&#34;
-                Updates mappings from faces to spins and cubes to occupations.
-
-                Args:
-                        cocycle (np.array): Cocycle on the subcomplex.
-                
-                Returns:
-                        Nothing.
-                &#34;&#34;&#34;
-                self.spins = cocycle</code></pre>
+        def _assign(self, cochain): pass</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
