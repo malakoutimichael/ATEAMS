@@ -114,7 +114,7 @@ text-align: center;
 <section id="section-intro">
 <h2 id="models">Models</h2>
 <p>A <em>model</em> programmatically specifies a probability distribution over a combinatorial object like a graph, cubical complex, or polytope. Given one of these objects (e.g. <code><a title="ateams.complexes.Cubical" href="../complexes/index.html#ateams.complexes.Cubical">Cubical</a></code>), each model implements a <em>proposal function</em> for sampling from the distribution it specifies. For example, <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code> represents the Edwards-Sokal coupling of the <a href="https://link.springer.com/article/10.1007/s00220-025-05322-5"><em>plaquette random cluster model</em> and <em>Potts lattice gauge theory</em></a> on subcomplexes of the $d$-fold, scale-$N$ cubical torus $\mathbb T^d_N$; its proposal function is a generalized version of the <a href="https://link.aps.org/doi/10.1103/PhysRevLett.58.86"><em>Swendsen-Wang algorithm</em></a>.</p>
-<p>The <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code>, <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code>, and <code><a title="ateams.models.Nienhuis" href="#ateams.models.Nienhuis">Nienhuis</a></code> models require performant sparse linear algebra over finite fields, for which we turn to <a href="https://github.com/cbouilla/spasm">SpaSM</a> and <a href="https://github.com/munuxi/SparseRREF">SparseRREF</a>. The <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code> and <code>Bernoulli</code> models require fast computation of persistent homology, for which we use <a href="https://www.sciencedirect.com/science/article/pii/S0747717116300098">PHAT</a> (when sampling over $\mathbb Z/2\mathbb Z$) and a home-brew variant of <a href="https://www.geometrie.tugraz.at/kerber/kerber_papers/ck-phcwat-11.pdf">the "twist" algorithm proposed by Chen and Kerber</a>. Only the <code><a title="ateams.models.Glauber" href="#ateams.models.Glauber">Glauber</a></code> dynamics model is implemented in "pure Python," though it relies exclusively on NumPy.</p>
+<p>The <code><a title="ateams.models.SwendsenWang" href="#ateams.models.SwendsenWang">SwendsenWang</a></code>, <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code>, and <code><a title="ateams.models.Nienhuis" href="#ateams.models.Nienhuis">Nienhuis</a></code> models require performant sparse linear algebra over finite fields, for which we turn to <a href="https://github.com/cbouilla/spasm">SpaSM</a> and <a href="https://github.com/munuxi/SparseRREF">SparseRREF</a>. The <code><a title="ateams.models.InvadedCluster" href="#ateams.models.InvadedCluster">InvadedCluster</a></code> and <code><a title="ateams.models.Bernoulli" href="#ateams.models.Bernoulli">Bernoulli</a></code> models require fast computation of persistent homology, for which we use <a href="https://www.sciencedirect.com/science/article/pii/S0747717116300098">PHAT</a> (when sampling over $\mathbb Z/2\mathbb Z$) and a home-brew variant of <a href="https://www.geometrie.tugraz.at/kerber/kerber_papers/ck-phcwat-11.pdf">the "twist" algorithm proposed by Chen and Kerber</a>. Only the <code><a title="ateams.models.Glauber" href="#ateams.models.Glauber">Glauber</a></code> dynamics model is implemented in "pure Python," though it relies exclusively on NumPy.</p>
 <p>The documentation for each model comes with performance information, viewable by clicking (e.g.) the "Performance over $\mathbb T^2_N$" button. Each configuration completed 100 iterations on Pangolin, a Dell Precision 5280 workstation with an 18-core Intel Xeon W-2295 CPU clocked at 1.3GHz.</p>
 </section>
 <section>
@@ -126,6 +126,192 @@ text-align: center;
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="ateams.models.Bernoulli"><code class="flex name class">
+<span>class <span class="ident">Bernoulli</span></span>
+<span>(</span><span>C, p=0.5, dimension=1, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initializes classical Bernoulli percolation on the provided complex,
+detecting percolation in the <code>dimension</code>-1th homology group.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>C</code></strong> :&ensp;<code>Complex</code></dt>
+<dd>The <code>Complex</code> object on which we'll be running experiments.</dd>
+<dt>p (float=1/2): The probability with which cells of the desired dimension</dt>
+<dt>are added.</dt>
+<dt><strong><code>dimension</code></strong> :&ensp;<code>int=1</code></dt>
+<dd>The dimension of cells on which we're percolating.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Bernoulli():
+        _name = &#34;Bernoulli&#34;
+        
+        def __init__(self, C, p=1/2, dimension=1, **kwargs):
+                &#34;&#34;&#34;
+                Initializes classical Bernoulli percolation on the provided complex,
+                detecting percolation in the `dimension`-1th homology group.
+
+                Args:
+                        C (Complex): The `Complex` object on which we&#39;ll be running experiments.
+                        p (float=1/2): The probability with which cells of the desired dimension
+                                are added.
+                        dimension (int=1): The dimension of cells on which we&#39;re percolating.
+                &#34;&#34;&#34;
+                # Object access. Set a field.
+                self.complex = C
+                self.dimension = dimension
+                self._returns = 2
+                self.field = 2
+                self.p = p
+
+                # Set a phantom spins attribute so we don&#39;t break the Chain
+                self.spins = None
+
+                # Force-recompute the matrices for a different dimension; creates
+                # a set of orientations for fast elementwise products.
+                self.matrices = Matrices()
+                self.matrices.full = self.complex.matrices.full
+
+                boundary, coboundary = self.complex.recomputeBoundaryMatrices(dimension)
+                self.matrices.boundary = boundary
+                self.matrices.coboundary = coboundary
+
+                # Useful values to have later.
+                self.cellCount = len(self.complex.flattened)
+                self.cells = len(self.complex.Boundary[self.dimension])
+                self.faces = len(self.complex.Boundary[self.dimension-1])
+                self.target = np.arange(self.complex.breaks[self.dimension], self.complex.breaks[self.dimension+1])
+
+                # Premake the &#34;occupied cells&#34; array; change the dimension of the complex
+                # to correspond to the provided dimension.
+                self.rank = comb(len(self.complex.corners), self.dimension)
+                self.nullity = len(self.complex.Boundary[self.dimension])
+
+                # Set low and high markers for adding cells.
+                self.low = self.complex.breaks[self.dimension]
+                self.high = self.complex.breaks[self.dimension+1]
+
+                # Delegates computation for persistence.
+                self._delegateComputation()
+
+                # Seed the random number generator.
+                self.RNG = np.random.default_rng()
+
+        
+        def _delegateComputation(self):
+                times = set(range(self.cellCount))
+                
+                def whittle(births, deaths):
+                        # Avoid doing this computation twice; TODO come back and fix this later
+                        _essential = sorted(set(
+                                e for e in times-(births|deaths)
+                                if self.low &lt;= e &lt; self.high
+                        ))
+
+                        return np.array(_essential, dtype=int)
+
+                
+                def persist(filtration):
+                        pairs = ComputePersistencePairs(self.matrices.full, filtration, self.dimension, self.complex.breaks)
+
+                        _births, _deaths = zip(*pairs)
+                        births = set(_births)
+                        deaths = set(_deaths)
+
+                        total = np.array(sorted(times-(births|deaths)), dtype=int)
+                        essential = whittle(births, deaths)
+                        pairs = np.array(pairs).T
+
+                        return essential, total, pairs
+                
+                self.persist = persist
+
+
+        def _filtrate(self):
+                &#34;&#34;&#34;
+                Constructs a filtration.
+                &#34;&#34;&#34;
+                uniform = self.RNG.uniform(size=self.cells)
+                include = np.nonzero(uniform &lt; self.p)[0]
+                exclude = np.nonzero(~(uniform &lt; self.p))[0]
+                m = include.shape[0]
+
+                filtration = np.arange(self.cellCount)
+
+                filtration[self.low:self.low+m] = self.target[include]
+                filtration[self.low+m:self.high] = self.target[exclude]
+
+                return filtration, include
+
+
+        def _initial(self):
+                &#34;&#34;&#34;
+                Computes an initial state for the model&#39;s Complex.
+
+                Returns:
+                        A numpy `np.array` representing a vector of spin assignments.
+                &#34;&#34;&#34;
+                return self.RNG.integers(
+                        0, high=self.field, dtype=FINT, size=self.faces
+                )
+        
+
+        def proposal(self, time):
+                &#34;&#34;&#34;
+                Proposal scheme for generalized Bernoulli percolation.
+
+                Args:
+                        time (int): Step in the chain.
+
+                Returns:
+                        A 2-tuple:
+
+                        1. a boolean array with a \(1\) in each entry corresponding to an
+                                included \(d\)-cell;
+                        2. times at which \(d\)-dimensional homological percolation events
+                                occurred.
+                &#34;&#34;&#34;
+                # Construct the filtration and find the essential cycles.
+                filtration, included = self._filtrate()
+                essential, __, _ = self.persist(filtration)
+
+                # Find when we stopped adding cells.
+                stop = self.low + included.shape[0]
+                giants = essential[(self.low &lt; essential) &amp; (essential &lt; stop)]
+                occupied = np.zeros(self.nullity, dtype=bool)
+                occupied[included] = 1
+
+                return occupied, giants
+        
+
+        def _assign(self, cochain): pass</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="ateams.models.Bernoulli.proposal"><code class="name flex">
+<span>def <span class="ident">proposal</span></span>(<span>self, time)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Proposal scheme for generalized Bernoulli percolation.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>time</code></strong> :&ensp;<code>int</code></dt>
+<dd>Step in the chain.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A 2-tuple:</p>
+<ol>
+<li>a boolean array with a <span><span class="MathJax_Preview">1</span><script type="math/tex">1</script></span> in each entry corresponding to an
+included <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-cell;</li>
+<li>times at which <span><span class="MathJax_Preview">d</span><script type="math/tex">d</script></span>-dimensional homological percolation events
+occurred.</li>
+</ol></div>
+</dd>
+</dl>
+</dd>
 <dt id="ateams.models.Glauber"><code class="flex name class">
 <span>class <span class="ident">Glauber</span></span>
 <span>(</span><span>C,<br>dimension=1,<br>field=2,<br>temperature=&lt;function constant.&lt;locals&gt;._&gt;,<br>initial=None,<br>**kwargs)</span>
@@ -1782,6 +1968,12 @@ proof.appendChild(square);
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
+<li>
+<h4><code><a title="ateams.models.Bernoulli" href="#ateams.models.Bernoulli">Bernoulli</a></code></h4>
+<ul class="">
+<li><code><a title="ateams.models.Bernoulli.proposal" href="#ateams.models.Bernoulli.proposal">proposal</a></code></li>
+</ul>
+</li>
 <li>
 <h4><code><a title="ateams.models.Glauber" href="#ateams.models.Glauber">Glauber</a></code></h4>
 <ul class="">

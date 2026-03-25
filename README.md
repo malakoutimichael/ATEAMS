@@ -291,10 +291,10 @@ Now, you can move on to [installing ATEAMS itself](#installing-ateams)!
 ```bibtex
 @software{ATEAMS,
   title={{ATEAMS: Algebraic Topology-Enabled AlgorithMs for Spin systems}},
-  author={Duncan, Paul and Pizzimenti, Anthony E. and Schweinhart, Benjamin},
-  url={https://github.com/apizzimenti/ATEAMS},
-  version={2.1.0},
-  doi={10.5281/zenodo.17574726}
+  author={Pizzimenti, Anthony E. and Schweinhart, Ben and Duncan, Paul},
+  url={github.com/apizzimenti/ATEAMS},
+  version={2.2.0},
+  doi={10.5281/zenodo.14284172}
 }
 ```
 
