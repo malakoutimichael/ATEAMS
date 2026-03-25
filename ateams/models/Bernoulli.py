@@ -141,7 +141,7 @@ class Bernoulli():
 		# Find when we stopped adding cells.
 		stop = self.low + included.shape[0]
 		giants = essential[(self.low < essential) & (essential < stop)]
-		occupied = np.zeros(self.nullity, dtype=bool)
+		occupied = np.zeros(self.nullity, dtype=np.uint8)
 		occupied[included] = 1
 
 		return occupied, giants
