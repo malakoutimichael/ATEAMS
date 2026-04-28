@@ -9,3 +9,4 @@ B = Bernoulli(hex_lattice, dimension=1)
 with Recorder().record("out.lz") as rec:
   for (spins, occupied) in Chain(B, steps=5000).progress():
     rec.store((spins, occupied))
+
