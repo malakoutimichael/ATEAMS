@@ -1,0 +1,250 @@
+import json
+import numpy as np
+from ast import literal_eval as le
+from pathlib import Path
+from itertools import chain
+
+from ..common import MINT, Matrices
+from .construction import boundaryMatrices, fullBoundaryMatrix
+
+
+class Matrices:
+    boundary = None
+    coboundary = None
+
+
+class Hexagonal:
+    _name = "Hexagonal"
+    
+    def __init__(self): 
+        pass
+
+    def fromSize(self, n, periodic=True):
+        """
+        Creates a hexagonal cell complex with the given size parameter.
+
+        Args:
+            n (int): The size parameter of the hexagon grid.
+            periodic (bool): Do we use periodic boundary conditions?
+        """
+        self._construct(n, periodic)
+        return self
+
+    @staticmethod
+    def _fullBoundaryMatrix(flattened, coefficients):
+        return np.array(fullBoundaryMatrix(flattened, coefficients))
+
+    def _construct(self, n, periodic, data=None):
+        self.dimension = 2
+        self.periodic = periodic
+        self.n = n
+        self.corners = [n, n]
+        self.matrices = Matrices()
+
+        # Specify sparse "boundary matrices," which we'll convert to *actual*
+        # matrices for the purposes of our stuff.
+        if not data:
+            vertexMap, Complex, flatBoundary, flatCoboundary = hexagonalComplex(self.n, self.periodic)
+            self.vertexMap, self.Boundary = vertexMap, Complex
+        else:
+            self.vertexMap = data.get("vertexMap", None)
+            self.Boundary = {
+                int(t): data["Complex"][t].astype(int) for t in data["Complex"].files
+            }
+            data["Complex"].close()
+            flatBoundary, flatCoboundary = boundaryMatrix(self.Boundary, self.dimension)
+        
+        # Construct the finite field and boundary matrices.
+        self.reindexer, self.reindexed, self.flattened = flatten(self.Boundary, self.dimension)
+        self.matrices.boundary = flatBoundary
+        self.matrices.coboundary = flatCoboundary
+
+        self.orientations = coefficients = {
+    1: np.tile([-1, 1], 1*2).astype(MINT), 
+    2: np.tile([-1, 1], 2*2).astype(MINT), 
+    3: np.tile([-1, 1], 3*2).astype(MINT)  
+}
+        self.matrices.full = np.array(fullBoundaryMatrix(self.flattened, coefficients), dtype=MINT)
+
+        # Get index ranges.
+        self.tranches = np.zeros((self.dimension+1, 2), dtype=int)
+        self.tranches[0][1] = len(self.Boundary[0])
+
+        for d in range(1, self.dimension+1):
+            self.tranches[d] = [self.tranches[d-1][1], self.tranches[d-1][1] + len(self.Boundary[d])]
+
+        # Breaks. (For percolation computation.)
+        self.breaks = np.array(self.tranches[:,0])
+
+        return self
+
+    def recomputeBoundaryMatrices(self, dimension):
+        """
+        Recomputes the boundary matrices up to the provided dimension.
+        """
+        boundary, coboundary = boundaryMatrix(self.Boundary, dimension)
+        return boundary, coboundary
+
+    def toFile(self, fp, vertexMap=False):
+        """
+        JSON-serializes this object and writes it to file so we can reconstruct it later.
+        """
+        absolute = Path(fp).resolve()
+        root = absolute.parent
+        stem = absolute.stem
+        ComplexFile = root/f".{stem}.complex.npz"
+        np.savez(ComplexFile, **{str(t): v for t, v in self.Boundary.items()})
+
+        with open(fp, "w") as write:
+            json.dump(
+                {
+                    "dimension": self.dimension,
+                    "periodic": int(self.periodic),
+                    "n": self.n,
+                    "Complex": str(ComplexFile),
+                    "vertexMap": { str(k): int(v) for k, v in self.vertexMap.items() } if vertexMap else { }
+                }, write
+            )
+
+    def fromFile(self, fp:str, vertexMap=False):
+        """
+        Reconstructs a serialized Complex.
+        """
+        with open(fp, "r") as read:
+            serialized = json.load(read)
+
+            periodic = bool(serialized["periodic"])
+            n = serialized["n"]
+            data = { "Complex": np.load(serialized["Complex"], allow_pickle=True) }
+            if vertexMap: data["vertexMap"] = { le(k): int(v) for k, v in serialized["vertexMap"].items() }
+
+            return self._construct(n, periodic, data)
+
+
+def flatten(Complex, D):
+    """
+    Flattens the given Complex for a PHAT-style specification.
+    """
+    reindexer = {
+        d: np.arange(len(Complex[d])) + sum([len(Complex[t]) for t in range(d)])
+        if d > 0 else np.arange(len(Complex[0]))
+        for d in range(D+1)
+    }
+
+    reindexed = {
+        d: reindexer[d-1][Complex[d]]
+        for d in range(1, D+1)
+    }
+
+    reindexed[0] = Complex[0]
+    flattened = sum([reindexed[t].tolist() for t in range(D+1)], [])
+
+    return reindexer, reindexed, flattened
+
+
+def boundaryMatrix(Complex, D):
+    """
+    Constructs the boundary and coboundary matrices in flat format.
+    """
+    coefficients = np.ones(len(Complex[D]))
+    coefficients[::2] = -1
+    coefficients = coefficients.astype(MINT)
+
+    Complex[D] = Complex[D].astype(MINT)
+    matrices = boundaryMatrices(Complex[D], coefficients)
+    boundary = matrices[0]
+    coboundary = matrices[1]
+
+    return np.array(boundary, dtype=MINT), np.array(coboundary, dtype=MINT)
+
+
+def hexagonalComplex(n, periodic=True):
+    """
+    Constructs a hexagonal complex completely specified by a boundary matrix and
+    a vertex map, formatted for the ATEAMS architecture.
+    """
+    # 1. Build the per-ring edge lists (mapping directly from your original script)
+    rings = []
+    for j in range(n):
+        temp = []
+        for i in range(j * (2 * n), j * (2 * n) + 2 * n - 1):
+            temp.append((i, i + 1))
+        temp.append((j * (2 * n) + 2 * n - 1, j * (2 * n)))
+        rings.append(temp)
+    
+    # Generate edges
+    edges_raw = list(chain.from_iterable(rings))
+
+    for j in range(1):
+        for i in range(n):
+            edges_raw.append((rings[j][2 * i][0], rings[(j + 1) % n][2 * i][0]))
+
+    for j in range(1, n):
+        for i in range(n):
+            edges_raw.append((rings[j][2 * i][1], rings[(j + 1) % n][2 * i][0]))
+
+    # Generate faces
+    faces_raw = []
+
+    for j in range(1):
+        for i in range(n):
+            faces_raw.append([
+                (rings[j][2 * i][0], rings[j][2 * i][1]),
+                (rings[j][2 * i][1], rings[j][(2 * i + 1) % (2 * n)][1]),
+                (rings[j][(2 * i + 1) % (2 * n)][1], rings[(j + 1) % n][(2 * i + 1) % (2 * n)][1]),
+                (rings[(j + 1) % n][(2 * i + 1) % (2 * n)][1], rings[(j + 1) % n][2 * i][1]),
+                (rings[(j + 1) % n][2 * i][1], rings[(j + 1) % n][2 * i][0]),
+                (rings[(j + 1) % n][2 * i][0], rings[j][2 * i][0])
+            ])
+
+    for j in range(1, n):
+        for i in range(n):
+            faces_raw.append([
+                (rings[j][2 * i + 1][0], rings[j][2 * i + 1][1]),
+                (rings[j][2 * i + 1][1], rings[j][(2 * i + 2) % (2 * n)][1]),
+                (rings[j][(2 * i + 2) % (2 * n)][1], rings[(j + 1) % n][(2 * i + 1) % (2 * n)][1]),
+                (rings[(j + 1) % n][(2 * i + 1) % (2 * n)][1], rings[(j + 1) % n][2 * i][1]),
+                (rings[(j + 1) % n][2 * i][1], rings[(j + 1) % n][2 * i][0]),
+                (rings[(j + 1) % n][2 * i][0], rings[j][2 * i + 1][0])
+            ])
+
+    # 2. Reformat into the designated ATEAMS structure.
+    Complex = {}
+    
+    # 0-cells: Gather unique coordinates
+    unique_vertices = set()
+    for edge in edges_raw:
+        unique_vertices.update(edge)
+    Complex[0] = np.array(sorted(list(unique_vertices)), dtype=MINT)
+
+    # 1-cells: Catalog unique edges
+    edges_unique = []
+    seen_edges = set()
+    for e in edges_raw:
+        t = tuple(e)
+        t_rev = (e[1], e[0])
+        if t not in seen_edges and t_rev not in seen_edges:
+            seen_edges.add(t)
+            edges_unique.append(e)
+            
+    Complex[1] = np.array(edges_unique, dtype=MINT)
+    
+    # Mapping to capture edge indices safely
+    edge_to_idx = {tuple(e): idx for idx, e in enumerate(edges_unique)}
+    for idx, e in enumerate(edges_unique):
+        edge_to_idx[(e[1], e[0])] = idx
+
+    # 2-cells: Map sequence of bounding edges to their Complex[1] indexes
+    faces_indices = []
+    for face in faces_raw:
+        face_idx = []
+        for edge in face:
+            face_idx.append(edge_to_idx[tuple(edge)])
+        faces_indices.append(face_idx)
+        
+    Complex[2] = np.array(faces_indices, dtype=MINT)
+
+    # Identity boundary coordinate map
+    vertexMap = {v: v for v in Complex[0]}
+
+    return vertexMap, Complex, *boundaryMatrix(Complex, 2)
