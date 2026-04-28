@@ -1,7 +1,6 @@
 from ateams import Chain, Recorder
 from ateams.complexes.Hexagonal import Hexagonal
 from ateams.models import Bernoulli
-import numpy as np
 
 hex_lattice = Hexagonal().fromSize(10)
 B = Bernoulli(hex_lattice, dimension=1)
@@ -9,4 +8,3 @@ B = Bernoulli(hex_lattice, dimension=1)
 with Recorder().record("out.lz") as rec:
   for (spins, occupied) in Chain(B, steps=5000).progress():
     rec.store((spins, occupied))
-
